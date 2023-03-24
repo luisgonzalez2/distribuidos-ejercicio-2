@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include "mensaje.h"
 #include "tratamiento_serv.h"
+#include "separar_mensaje.c"
 
 #define SERVIDOR "/SERVIDOR"
 #define CLIENTE "/CLIENTE"
@@ -361,8 +362,10 @@ int copy_key(int clave, int clave2)
     return 0;
 }
 
-int tratar_peticion(struct peticion pet)
+int tratar_peticion(char mensaje)
 {
+    char_to_peticion (mensaje);
+
     mqd_t q_cliente;
     struct respuesta r;
     switch (pet.op)

@@ -1,70 +1,71 @@
-#include <mqueue.h>
-#include <string.h>
 #include <stdio.h>
-#include <sys/types.h>
+#include <netdb.h>
+#include <strings.h>
+#include <string.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include "mensaje.h"
 #define SERVIDOR "/SERVIDOR"
 
 struct respuesta mandar_servidor(struct peticion pet)
-{
-	mqd_t q_servidor;			// Cola de mensajes del proceso servidor
-	mqd_t q_cliente;			// Cola de mensajes para el proceso cliente
-	struct mq_attr client_attr; // Atributos de la cola de cliente
-	client_attr.mq_msgsize = sizeof(struct respuesta);
-	client_attr.mq_maxmsg = 5;
+{	int sd;
+    struct sockaddr_in server_addr;//¿Cual es el tamaño del server? a lo mejor hay que editarlo
+    struct hostent *hp;
+    int32_t a, b, res;          
+	char op;
+	int err;
 	struct respuesta res;
+	char respuesta;
 
-	// 1. Abre cola del usuario
+	// 1. Abre socket del usuario
 	char queuename[MAXSIZE];
 	printf("Abre cola de usuario\n");
 	sprintf(queuename, "/Cola-%d", getpid());
 	strcpy(pet.q_name, queuename);
-	q_cliente = mq_open(queuename, O_CREAT | O_RDONLY, 0700, &client_attr);
-	if (q_cliente == -1)
-	{
-		perror("mq_open 1");
-		res.respuesta = -1;
-		return res;
+	sd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sd == 1) {
+		printf("Error en socket\n");
+		// return -1; // función de tipo struct
 	}
-	struct mq_attr serv_attr;
-	serv_attr.mq_msgsize = sizeof(struct peticion);
-	serv_attr.mq_maxmsg = 5;
 
-	// 2. Manda al servidor la petición
-	q_servidor = mq_open(SERVIDOR, O_CREAT | O_WRONLY, 0700, &serv_attr);
-	if (q_servidor == -1)
-	{
-		mq_close(q_cliente);
-		perror("mq_open 2");
-		res.respuesta = -1;
-		return res;
-	}
-	if (mq_send(q_servidor, (const char *)&pet, sizeof(pet), 0) < 0)
-	{
-		perror("mq_send");
-		res.respuesta = -1;
-		return res;
-	}
-	mq_getattr(q_servidor, &serv_attr);
-	printf("Msg servidor:%ld\n", serv_attr.mq_curmsgs);
-
-	// 3. Recibe la respuesta
+	// 2. Abrir socket del servidor 
+	bzero((char *)&server_addr, sizeof(server_addr));
+   	hp = gethostbyname (SERVIDOR);//El nombre del servidor es el establecido
+	if (hp == NULL) {
+		printf("Error en gethostbyname\n");
+		// return -1; // función de tipo struct
+	};
+   	memcpy (&(server_addr.sin_addr), hp->h_addr, hp->h_length);
+   	server_addr.sin_family  = AF_INET;
+   	server_addr.sin_port    = htons(4200);
+	//3.Establece la conexión
+   	err = connect(sd, (struct sockaddr *) &server_addr,  sizeof(server_addr));
+	if (err == -1) {
+		printf("Error en connect\n");
+		// return -1; // función de tipo struct
+	}//4.Pasar struct petición a char
+	//-----------------------------------
+	// 5.Mandar petición
+	err = sendMessage(sd, (char *) &op, sizeof(char));  // envía la operacion
+	if (err == -1){
+		printf("Error en envio\n");
+		return -1;
+	};
 	printf("Mensaje mandado\n");
-	mq_getattr(q_cliente, &client_attr);
-	printf("Msg receptor:%ld\n", client_attr.mq_curmsgs);
-	if (mq_receive(q_cliente, (char *)&res, sizeof(struct respuesta), 0) < 0)
-	{
-		perror("mq_recv 1");
-		res.respuesta = -1;
-	}
+	//6.Recibir respuesta
+	err = recvMessage(sd, (char *) &respuesta, sizeof(int32_t));     // recibe la respuesta
+	if (err == -1){
+		printf("Error en recepcion\n");
+		return -1;//Mirar esto
+	};
 	printf("respuesta llegó a su destino\n");
-
-	// 4. Cerramos colas
-	mq_close(q_servidor);
-	mq_close(q_cliente);
-	mq_unlink(queuename);
-	return res;
+	//7.Pasar de char a un struct respuesta
+	//------------------------------
+	// 8. Cerramos colas
+	close (sd);
+	return res.respuesta;
 }
 
 int init()

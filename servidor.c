@@ -1,17 +1,16 @@
-#include <mqueue.h>
-#include <pthread.h>
 #include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <dirent.h>
-#include <stdlib.h>
 #include <unistd.h>
+#include <strings.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include "lines.h"
 #include "mensaje.h"
 #include "tratamiento_serv.h"
 
 #define MAX_THREADS 10
 #define MAX_PETICIONES 256
-#define SERVIDOR "/SERVIDOR"
+#define SERVIDOR "/SERVIDOR"//Pasar como var de entorno
 
 mqd_t q_servidor;
 pthread_mutex_t m_params;
@@ -29,27 +28,48 @@ int servicio(void *args)
 	pthread_mutex_unlock(&m_params);
 
 	tratar_peticion(mensaje);
+	//Los resultados pasarlos a ntols
 	pthread_exit(NULL);
 }
 
 int main(void)
 {
-	mqd_t q_servidor;	   // Cola de mensajes del proceso servidor
-	struct mq_attr q_attr; // Atributos de la cola de servidor
-	pthread_attr_t t_attr;
-	q_attr.mq_maxmsg = 5;
-	q_attr.mq_msgsize = sizeof(struct peticion);
+	struct sockaddr_in server_addr,  client_addr;
+	socklen_t size;
+    int sd, sc;
+    int val;
+    char op;
+    int32_t a, b,  res;
+	int err;
+	char mess;
+	// 1. Abre socket del servidor
+	if ((sd =  socket(AF_INET, SOCK_STREAM, 0))<0){
+                printf ("SERVER: Error en el socket");
+                return (0);
+    }
+    val = 1;//Mirar esto
+    setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *) &val, sizeof(int));
 
-	int error;
+	printf("Abre cola de servidor\n");
+	bzero((char *)&server_addr, sizeof(server_addr));
+    server_addr.sin_family      = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port        = htons(4200);
 
-	// 1. Abre cola del servidor
-	q_servidor = mq_open(SERVIDOR, O_CREAT | O_RDONLY, 0700, &q_attr);
-	if (q_servidor == -1)
-	{
-		perror("mq_open");
+    err = bind(sd, (const struct sockaddr *)&server_addr,
+		sizeof(server_addr));
+	if (err == -1) {
+		printf("Error en bind\n");
 		return -1;
 	}
-	printf("Abre cola de servidor\n");
+
+    	err = listen(sd, SOMAXCONN);
+	if (err == -1) {
+		printf("Error en listen\n");
+		return -1;
+	}
+
+    size = sizeof(client_addr);
 
 	// 2. Crea hilos bajo demanda a los que envía las peticiones recibidas
 	pthread_attr_init(&t_attr);
@@ -58,13 +78,23 @@ int main(void)
 		struct peticion mess; // Mensaje a recibir
 		pthread_t hilo;
 		// Recibe el mensaje mandado por claves.c en su cola servidor
-		error = mq_receive(q_servidor, (char *)&mess, sizeof(struct peticion), 0);
-		if (error == -1)
-		{
-			perror("mq_receive");
-			break;
+		printf("esperando conexion\n");
+		//----Acepta conexión
+    	sc = accept(sd, (struct sockaddr *)&client_addr, (socklen_t *)&size);
+		if (sc == -1) {
+			printf("Error en accept\n");
+			return -1;
 		}
-		// Con la petición recibida, mandan al hilo esa petición
+		printf("conexiÃ³n aceptada de IP: %s   Puerto: %d\n",
+		inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+		//Recive mensaje
+  		err = recvMessage ( sc, (char *) &mess, sizeof(char));   // recibe la operaciÃ³
+		if (err == -1) {
+			printf("Error en recepcion\n");
+			close(sc);
+			continue;
+		}
+		// Con la petición recibida, mandan al hilo esa petición como CHAR
 		listo = 0;
 		if (pthread_create(&hilo, NULL, (void *)servicio, &mess) != 0)
 		{
