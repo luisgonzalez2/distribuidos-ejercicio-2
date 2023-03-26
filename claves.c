@@ -64,6 +64,7 @@ struct respuesta mandar_servidor(struct peticion pet)
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(atoi(port_tuplas));
 	memset(&server_addr, 0, sizeof(server_addr));
+	printf("Conoce al servidor\n");
 
 
 	// 3.Establece la conexión
@@ -74,7 +75,7 @@ struct respuesta mandar_servidor(struct peticion pet)
 		res.respuesta = -1;
 		return res;
 	}
-
+	printf("Conecta con el servidor\n");
 	// 4.Pasar struct petición a char
 	strcpy(mensaje, peticion_to_char(pet));
 

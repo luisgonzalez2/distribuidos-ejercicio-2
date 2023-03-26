@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <errno.h>
+#include <stdio.h>
 #include "lines.h"
 
 int sendMessage(int socket, char *buffer, int len)
@@ -14,10 +15,16 @@ int sendMessage(int socket, char *buffer, int len)
 		buffer = buffer + r;
 	} while ((l > 0) && (r >= 0));
 
-	if (r < 0)
+	if (r < 0){
+		printf("Fallo\n");
 		return (-1); /* fail */
+	}
+		
 	else
+	{
+		printf("Exito\n");
 		return (0); /* full length has been sent */
+	}	
 }
 
 int recvMessage(int socket, char *buffer, int len)

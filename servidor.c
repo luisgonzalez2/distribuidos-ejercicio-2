@@ -109,6 +109,7 @@ int main(void)
 			close(sc);
 			continue;
 		}
+		printf("Recibe el msg\n");
 		// Con la petición recibida, mandan al hilo esa petición como CHAR
 		listo = 0;
 		if (pthread_create(&hilo, NULL, (void *)servicio, &mess) != 0)
