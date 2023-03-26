@@ -30,3 +30,7 @@ servidor: $(SERVIDOR_OBJ_FILES)
 
 clean:
 	rm -f $(BIN_FILES) *.o *.so
+
+#export INSTALL_PATH=/home/elisa/Escritorio/distribuidos-ejercicio-2
+#export LD_LIBRARY_PATH=/home/elisa/Escritorio/distribuidos-ejercicio-2
+

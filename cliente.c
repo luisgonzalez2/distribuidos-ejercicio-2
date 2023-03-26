@@ -76,3 +76,6 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+//env IP_TUPLAS=127.0.0.1 PORT_TUPLAS=8080 ./cliente
+
+

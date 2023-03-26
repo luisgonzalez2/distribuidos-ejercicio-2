@@ -23,7 +23,7 @@ int sd, sc; // Descriptores de fichero
 
 int servicio(void *args)
 {
-	char mensaje;
+	char mensaje[1024];
 	pthread_mutex_lock(&m_params);
 	memcpy(&mensaje, args, 1024);
 	listo = 1;
@@ -128,3 +128,6 @@ int main(void)
 
 	return 0;
 }
+
+//env IP_TUPLAS=127.0.0.1 PORT_TUPLAS=8080 ./servidor
+

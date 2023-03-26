@@ -41,20 +41,28 @@ struct respuesta mandar_servidor(struct peticion pet)
 	ip_tuplas = getenv("IP_TUPLAS");
 	struct in_addr addr;
 	inet_aton(ip_tuplas, &addr);
+///------------------------>PRUEBA
+	if (inet_aton(ip_tuplas, &addr) == 0)
+	{
+		printf("Error en inet_aton\n");
+		res.respuesta = -1;
+		return res;
+	}
+
 	bzero((char *)&server_addr, sizeof(server_addr));
 	hp = gethostbyaddr(&addr, sizeof(addr), AF_INET);
 	//he = gethostbyaddr(&ipv4addr, sizeof ipv4addr, AF_INET);
 	if (hp == NULL)
 	{
-		printf("Error en gethostbyname\n");
+		printf("Error en gethostbyaddr\n");
 		res.respuesta = -1;
 		return res;
 	}
-	int port_tuplas;
-	strcpy(port_tuplas,getenv("PORT_TUPLAS"));
+	char *port_tuplas;  // Declarar port_tuplas como un puntero a char
+	port_tuplas = getenv("PORT_TUPLAS");  // Asignar el valor de la variable de entorno
 	memcpy(&(server_addr.sin_addr), hp->h_addr_list, hp->h_length);
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(port_tuplas);
+	server_addr.sin_port = htons(atoi(port_tuplas));
 	memset(&server_addr, 0, sizeof(server_addr));
 
 
