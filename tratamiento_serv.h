@@ -10,5 +10,5 @@ int set_value(int clave, char valor1[256], int valor2, double valor3, char q_nam
 struct respuesta get_value(int clave, char *valor1, int *valor2, double *valor3);
 int modify_value(int clave, char valor1[256], int valor2, double valor3, char q_name[256]);
 int copy_key(int key1, int key2);
-int tratar_peticion(struct peticion pet);
+struct respuesta tratar_peticion(char mensaje[1024]);
 #endif

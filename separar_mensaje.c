@@ -1,75 +1,94 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
+#include <string.h>
 #include "mensaje.h"
 
-void separarMensajePeticion(char *mensaje, int *op, int *clave, char *v1, int *v2, float *v3, char *q_name, int *clave2)
+// Función auxiliar que separa los elementos de la cadena de caracteres en variables
+void separarMensajePeticion(char mensaje[1024], int *op, int *clave, char v1[256], int *v2, double *v3, char q_name[256], int *clave2)
 {
     char *token;
     token = strtok(mensaje, ";");
-    *op = atoi(token);
-    token = strtok(mensaje, ";");
-    *clave = atoi(token);
+    *op = ntohl(atoi(token)); // convertir de big endian a little endian
+    token = strtok(NULL, ";");
+    *clave = ntohl(atoi(token)); // convertir de big endian a little endian
     token = strtok(NULL, ";");
     strcpy(v1, token);
     token = strtok(NULL, ";");
-    *v2 = atoi(token);
+    *v2 = ntohl(atoi(token)); // convertir de big endian a little endian
     token = strtok(NULL, ";");
-    *v3 = atof(token);
+    *v3 = ntohl(atof(token)); // convertir de big endian a little endian
     token = strtok(NULL, ";");
-    strcopy(q_name, token);
-    token = strtok(mensaje, ";");
-    *clave2 = atoi(token);
+    strcpy(q_name, token);
+    token = strtok(NULL, ";");
+    *clave2 = ntohl(atoi(token)); // convertir de big endian a little endian
 }
 
-struct peticion char_to_peticion (mensaje)
+// Transforma la cadena de caracteres en estructuras de tipo petición que usamos en el servidor
+struct peticion char_to_peticion(char mensaje[1024])
 {
-    // separarMensajePeticion separa el char en los elementos del struct
-    char v1, q_name;
-    int op, clave, v1, v2, clave2;
-    float v3;
+    char v1[256], q_name[256];
+    int op, clave, v2, clave2;
+    double v3;
     separarMensajePeticion(mensaje, &op, &clave, v1, &v2, &v3, q_name, &clave2);
 
     // Añadimos los valores del mensaje al struct
     struct peticion pet;
     pet.op = op;
     pet.clave = clave;
-    strcopy(pet.valor1, v1);
+    strcpy(pet.valor1, v1);
     pet.valor2 = v2;
     pet.valor3 = v3;
-    strcopy(pet.q_name, q_name);
+    strcpy(pet.q_name, q_name);
     pet.clave2 = clave2;
 
     return pet;
 }
 
-void separarMensajeRespuesta(char *mensaje, int *respuesta, char *v1, int *v2, float *v3)
-{
-    char *token;
+// Función auxiliar que separa los elementos de la cadena de caracteres en variables
+void separarMensajeRespuesta(char mensaje[1024], int *respuesta, char v1[256], int *v2, double *v3)
+{   char *token;
     token = strtok(mensaje, ";");
-    *respuesta = atoi(token);
-    token = strtok(mensaje, ";");
+    *respuesta = ntohl(atoi(token));
+    token = strtok(NULL, ";");
     strcpy(v1, token);
     token = strtok(NULL, ";");
-    *v2 = atoi(token);
+    *v2 = ntohl(atoi(token)); // convertir de big endian a little endian
     token = strtok(NULL, ";");
-    *v3 = atof(token);
+    *v3 = ntohl(atof(token)); // convertir de big endian a little endian
 }
 
-struct respuesta char_to_respuesta (mensaje)
+// Transforma la cadena de caracteres en estructuras de tipo respuesta que usamos en el servidor
+struct respuesta char_to_respuesta(char mensaje[1024])
 {
-    // separarMensajeRespuesta separa el char en los elementos del struct
-    char v1;
-    int respuesta, v1, v2;
-    float v3;
+    char v1[256];
+    int respuesta, v2;
+    double v3;
     separarMensajeRespuesta(mensaje, &respuesta, v1, &v2, &v3);
 
     // Añadimos los valores del mensaje al struct
     struct respuesta res;
     res.respuesta = respuesta;
-    strcopy(res.valor1, v1);
+    strcpy(res.valor1, v1);
     res.valor2 = v2;
     res.valor3 = v3;
 
     return res;
+}
+
+// Transforma las estructuras de tipo petición en cadenas de caracteres que se pueden trasmitir por los sockets
+char *peticion_to_char(struct peticion p)
+{
+    char *resultado = malloc(1024);
+    sprintf(resultado, "%d;%d;%s;%d;%.2f;%s;%d;", p.op, p.clave, p.valor1, p.valor2, p.valor3, p.q_name, p.clave2);
+    return resultado;
+}
+
+// Transforma las estructuras de tipo respuesta en cadenas de caracteres que se pueden trasmitir por los sockets
+char *respuesta_to_char(struct respuesta r)
+{
+    char *resultado = malloc(1024);
+    sprintf(resultado, "%d;%s;%d;%.2f;", r.respuesta, r.valor1, r.valor2, r.valor3);
+    return resultado;
 }

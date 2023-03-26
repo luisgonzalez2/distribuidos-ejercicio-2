@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h> 
 #include <netdb.h>
 #include <strings.h>
 #include <string.h>
@@ -7,65 +8,94 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include "mensaje.h"
+#include "lines.h"
+#include "separar_mensaje.h"
 #define SERVIDOR "/SERVIDOR"
 
 struct respuesta mandar_servidor(struct peticion pet)
-{	int sd;
-    struct sockaddr_in server_addr;//¿Cual es el tamaño del server? a lo mejor hay que editarlo
-    struct hostent *hp;
-    int32_t a, b, res;          
-	char op;
+{
+	int sd;
+	struct sockaddr_in server_addr;
+	struct hostent *hp;
 	int err;
 	struct respuesta res;
-	char respuesta;
+	char respuesta[1024];
+	char mensaje[1024];
 
 	// 1. Abre socket del usuario
 	char queuename[MAXSIZE];
 	printf("Abre cola de usuario\n");
 	sprintf(queuename, "/Cola-%d", getpid());
 	strcpy(pet.q_name, queuename);
+	
 	sd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sd == 1) {
+	if (sd == 1)
+	{
 		printf("Error en socket\n");
-		// return -1; // función de tipo struct
+		res.respuesta = -1;
+		return res;
 	}
 
-	// 2. Abrir socket del servidor 
+	// 2. Abrir socket del servidor
+	char *ip_tuplas;
+	ip_tuplas = getenv("IP_TUPLAS");
+	struct in_addr addr;
+	inet_aton(ip_tuplas, &addr);
 	bzero((char *)&server_addr, sizeof(server_addr));
-   	hp = gethostbyname (SERVIDOR);//El nombre del servidor es el establecido
-	if (hp == NULL) {
+	hp = gethostbyaddr(&addr, sizeof(addr), AF_INET);
+	//he = gethostbyaddr(&ipv4addr, sizeof ipv4addr, AF_INET);
+	if (hp == NULL)
+	{
 		printf("Error en gethostbyname\n");
-		// return -1; // función de tipo struct
-	};
-   	memcpy (&(server_addr.sin_addr), hp->h_addr, hp->h_length);
-   	server_addr.sin_family  = AF_INET;
-   	server_addr.sin_port    = htons(4200);
-	//3.Establece la conexión
-   	err = connect(sd, (struct sockaddr *) &server_addr,  sizeof(server_addr));
-	if (err == -1) {
+		res.respuesta = -1;
+		return res;
+	}
+	int port_tuplas;
+	strcpy(port_tuplas,getenv("PORT_TUPLAS"));
+	memcpy(&(server_addr.sin_addr), hp->h_addr_list, hp->h_length);
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(port_tuplas);
+	memset(&server_addr, 0, sizeof(server_addr));
+
+
+	// 3.Establece la conexión
+	err = connect(sd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+	if (err == -1)
+	{
 		printf("Error en connect\n");
-		// return -1; // función de tipo struct
-	}//4.Pasar struct petición a char
-	//-----------------------------------
+		res.respuesta = -1;
+		return res;
+	}
+
+	// 4.Pasar struct petición a char
+	strcpy(mensaje, peticion_to_char(pet));
+
 	// 5.Mandar petición
-	err = sendMessage(sd, (char *) &op, sizeof(char));  // envía la operacion
-	if (err == -1){
+	err = sendMessage(sd, (char *)&mensaje, sizeof(mensaje)); // Envía petición
+	if (err == -1)
+	{
 		printf("Error en envio\n");
-		return -1;
-	};
+		res.respuesta = -1;
+		return res;
+	}
 	printf("Mensaje mandado\n");
-	//6.Recibir respuesta
-	err = recvMessage(sd, (char *) &respuesta, sizeof(int32_t));     // recibe la respuesta
-	if (err == -1){
+
+	// 6.Recibir respuesta
+	err = recvMessage(sd, (char *)&respuesta, sizeof(respuesta)); // Recibe respuesta
+	if (err == -1)
+	{
 		printf("Error en recepcion\n");
-		return -1;//Mirar esto
-	};
-	printf("respuesta llegó a su destino\n");
-	//7.Pasar de char a un struct respuesta
-	//------------------------------
-	// 8. Cerramos colas
-	close (sd);
-	return res.respuesta;
+		res.respuesta = -1;
+		return res;
+	}
+	printf("Respuesta llegó a su destino\n");
+
+	// 7.Pasar de char a un struct respuesta
+	res = char_to_respuesta(respuesta);
+
+	//  8. Cerramos colas
+	close(sd);
+	return res;
 }
 
 int init()

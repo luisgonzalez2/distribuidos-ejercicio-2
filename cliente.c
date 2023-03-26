@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
         printf("Error en exist\n");
         return -1;
     }
+
     // COPY_KEY ---------------------------------------------------------------------------
     int clave_1 = 1;
     int clave_2 = 2;
@@ -74,5 +75,4 @@ int main(int argc, char *argv[])
     }
 
     return 0;
-    // export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:
 }

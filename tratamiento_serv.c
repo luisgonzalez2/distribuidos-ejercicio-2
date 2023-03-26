@@ -11,7 +11,7 @@
 #include <pthread.h>
 #include "mensaje.h"
 #include "tratamiento_serv.h"
-#include "separar_mensaje.c"
+#include "separar_mensaje.h"
 
 #define SERVIDOR "/SERVIDOR"
 #define CLIENTE "/CLIENTE"
@@ -362,11 +362,9 @@ int copy_key(int clave, int clave2)
     return 0;
 }
 
-int tratar_peticion(char mensaje)
+struct respuesta tratar_peticion(char mensaje[1024])
 {
-    char_to_peticion (mensaje);
-
-    mqd_t q_cliente;
+    struct peticion pet = char_to_peticion(mensaje);
     struct respuesta r;
     switch (pet.op)
     {
@@ -408,18 +406,5 @@ int tratar_peticion(char mensaje)
         break;
     }
 
-    // Cuando tiene la respuesta, la manda a la cola del cliente
-    if ((q_cliente = mq_open(pet.q_name, O_WRONLY)) < 0)
-    {
-        perror("Error al abrir la cola de mensajes");
-        return -1;
-    }
-    if (mq_send(q_cliente, (char *)&r, sizeof(struct respuesta), 0) < 0)
-    {
-        perror("Error al enviar por la cola de mensajes");
-        return -1;
-    };
-    printf("Respuesta mandada\n");
-
-    return 0;
+    return r;
 }
