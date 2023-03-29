@@ -10,7 +10,7 @@
 #include "mensaje.h"
 #include "lines.h"
 #include "separar_mensaje.h"
-#define SERVIDOR "/SERVIDOR"
+
 
 struct respuesta mandar_servidor(struct peticion pet)
 {
@@ -20,14 +20,9 @@ struct respuesta mandar_servidor(struct peticion pet)
 	int err;
 	struct respuesta res;
 	char respuesta[1024];
-	char mensaje[1024];
+	char * mensaje;
 
-	// 1. Abre socket del usuario
-	char queuename[MAXSIZE];
-	printf("Abre cola de usuario\n");
-	sprintf(queuename, "/Cola-%d", getpid());
-	strcpy(pet.q_name, queuename);
-	
+	// 1. Abre socket del usuario	
 	sd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sd == 1)
 	{
@@ -38,32 +33,23 @@ struct respuesta mandar_servidor(struct peticion pet)
 
 	// 2. Abrir socket del servidor
 	char *ip_tuplas;
-	ip_tuplas = getenv("IP_TUPLAS");
-	struct in_addr addr;
-	inet_aton(ip_tuplas, &addr);
-///------------------------>PRUEBA
-	if (inet_aton(ip_tuplas, &addr) == 0)
-	{
-		printf("Error en inet_aton\n");
-		res.respuesta = -1;
-		return res;
-	}
 
+	ip_tuplas = getenv("IP_TUPLAS");
 	bzero((char *)&server_addr, sizeof(server_addr));
-	hp = gethostbyaddr(&addr, sizeof(addr), AF_INET);
-	//he = gethostbyaddr(&ipv4addr, sizeof ipv4addr, AF_INET);
+	hp = gethostbyname (ip_tuplas);
 	if (hp == NULL)
 	{
 		printf("Error en gethostbyaddr\n");
 		res.respuesta = -1;
 		return res;
 	}
-	char *port_tuplas;  // Declarar port_tuplas como un puntero a char
-	port_tuplas = getenv("PORT_TUPLAS");  // Asignar el valor de la variable de entorno
+	int port_tuplas;  // Declarar port_tuplas como un puntero a char
+	port_tuplas = atoi(getenv("PORT_TUPLAS"));  // Asignar el valor de la variable de entorno
+	
 	memcpy(&(server_addr.sin_addr), hp->h_addr_list, hp->h_length);
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(atoi(port_tuplas));
-	memset(&server_addr, 0, sizeof(server_addr));
+	server_addr.sin_port = htons(port_tuplas);
+	
 	printf("Conoce al servidor\n");
 
 
@@ -71,29 +57,32 @@ struct respuesta mandar_servidor(struct peticion pet)
 	err = connect(sd, (struct sockaddr *)&server_addr, sizeof(server_addr));
 	if (err == -1)
 	{
-		printf("Error en connect\n");
+		perror("Error en connect\n");
 		res.respuesta = -1;
 		return res;
 	}
 	printf("Conecta con el servidor\n");
 	// 4.Pasar struct petición a char
-	strcpy(mensaje, peticion_to_char(pet));
+	char * mensaje = peticion_to_char(pet);
+	
 
 	// 5.Mandar petición
-	err = sendMessage(sd, (char *)&mensaje, sizeof(mensaje)); // Envía petición
+
+	err = sendMessage(sd, (char *)mensaje, strlen(mensaje) + 1); // Envía petición
 	if (err == -1)
 	{
-		printf("Error en envio\n");
+		perror("Error en envio\n");
 		res.respuesta = -1;
 		return res;
 	}
 	printf("Mensaje mandado\n");
 
 	// 6.Recibir respuesta
-	err = recvMessage(sd, (char *)&respuesta, sizeof(respuesta)); // Recibe respuesta
+	//err = recvMessage(sd, (char *)&respuesta, sizeof(respuesta)); // Recibe respuesta
+	err = readLine(sd, respuesta, 1024);
 	if (err == -1)
 	{
-		printf("Error en recepcion\n");
+		perror("Error en recepcion\n");
 		res.respuesta = -1;
 		return res;
 	}
@@ -104,6 +93,7 @@ struct respuesta mandar_servidor(struct peticion pet)
 
 	//  8. Cerramos colas
 	close(sd);
+	free(mensaje);
 	return res;
 }
 

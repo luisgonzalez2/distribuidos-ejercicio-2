@@ -24,17 +24,34 @@ int sd, sc; // Descriptores de fichero
 int servicio(void *args)
 {
 	char mensaje[1024];
+	int sc_local;
+	int err = 0;
+
 	pthread_mutex_lock(&m_params);
-	memcpy(&mensaje, args, 1024);
+	sc_local = (int) *args;
 	listo = 1;
 	pthread_cond_signal(&cond);
 	pthread_mutex_unlock(&m_params);
 
+	printf("Recibe el msg\n");
+	// Con la petición recibida, mandan al hilo esa petición como CHAR
+	err = readLine(sc_local, mensaje, 1024);
+	if (err == -1)
+	{
+		printf("Error en recepcion\n");
+		close(sc);
+		continue;
+	}
+
 	struct respuesta res = tratar_peticion(mensaje);
-	char msg_respuesta[1024];
-	strcpy(msg_respuesta,respuesta_to_char(res));
+	char * msg_respuesta;
+	
+	msg_respuesta = respuesta_to_char(res);
 	// Mandar al socket del cliente
-	sendMessage(sc, msg_respuesta, sizeof(msg_respuesta));
+	sendMessage(sc_local, (char *) msg_respuesta, strlen(msg_respuesta) + 1);
+
+	free(msg_respuesta);
+	close(sc_local);
 	pthread_exit(NULL);
 }
 
@@ -44,7 +61,7 @@ int main(void)
 	socklen_t size;
 	int val;
 	int err;
-
+	char mensaje[1024];
 
 	// 1. Abre socket del servidor
 	if ((sd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -58,17 +75,14 @@ int main(void)
 	printf("Abre cola de servidor\n");
 	bzero((char *)&server_addr, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
-	char ip_tuplas[16];
-	// IP de la variable de entorno
-	strcpy(ip_tuplas, getenv("IP_TUPLAS"));
-	server_addr.sin_addr.s_addr = inet_addr(ip_tuplas);
+	server_addr.sin_addr.s_addr = INADDR_ANY; 
+
 	// Puerto variable de entorno
 	int port_tuplas;
 	port_tuplas = atoi(getenv("PORT_TUPLAS"));
 	server_addr.sin_port = htons(port_tuplas);
 
-	err = bind(sd, (const struct sockaddr *)&server_addr,
-			   sizeof(server_addr));
+	err = bind(sd, (const struct sockaddr *)&server_addr, sizeof(server_addr));
 	if (err == -1)
 	{
 		printf("Error en bind\n");
@@ -86,6 +100,7 @@ int main(void)
 
 	// 2. Crea hilos bajo demanda a los que envía las peticiones recibidas
 	pthread_attr_init(&t_attr);
+	pthread_attr_setdetachstate(&t_attr, PTHREAD_CREATE_DETACHED);
 
 	while (1)
 	{
@@ -102,17 +117,10 @@ int main(void)
 		}
 		printf("Conexión aceptada de IP: %s Puerto: %d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 		// Recibe mensaje
-		err = recvMessage(sc, (char *)&mess, sizeof(char)); // recibe la operación
-		if (err == -1)
-		{
-			printf("Error en recepcion\n");
-			close(sc);
-			continue;
-		}
-		printf("Recibe el msg\n");
-		// Con la petición recibida, mandan al hilo esa petición como CHAR
+		//err = recvMessage(sc, (char *)&mess, sizeof(char)); // recibe la operación
+
 		listo = 0;
-		if (pthread_create(&hilo, NULL, (void *)servicio, &mess) != 0)
+		if (pthread_create(&hilo, NULL, (void *)servicio, &sc) != 0)
 		{
 			perror("Error creando thread\n");
 			return 0;
@@ -124,11 +132,10 @@ int main(void)
 			pthread_cond_wait(&cond, &m_params);
 		}
 		pthread_mutex_unlock(&m_params);
-		pthread_join(hilo, NULL);
 	}
 
 	return 0;
 }
 
-//env IP_TUPLAS=127.0.0.1 PORT_TUPLAS=8080 ./servidor
+// PORT_TUPLAS=8080 ./servidor
 
