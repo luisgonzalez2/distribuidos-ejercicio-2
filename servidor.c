@@ -26,23 +26,22 @@ int servicio(void *args)
 	char mensaje[1024];
 	int sc_local;
 	int err = 0;
-
+	printf("En el hilo\n");
 	pthread_mutex_lock(&m_params);
-	sc_local =(int) args;
+	sc_local =( *(int*) args);
+	printf("Socket:%d\n",sc_local);
 	listo = 1;
 	pthread_cond_signal(&cond);
 	pthread_mutex_unlock(&m_params);
-
-	printf("Recibe el msg\n");
 	// Con la petición recibida, mandan al hilo esa petición como CHAR
 	err = readLine(sc_local, mensaje, 1024);
 	if (err == -1)
 	{
-		printf("Error en recepcion\n");
+		perror("Error en recepcion1\n");
 		close(sc);
 		exit(-1);
 	}
-
+	printf("Recibe el msg\n");
 	struct respuesta res = tratar_peticion(mensaje);
 	char * msg_respuesta;
 	
@@ -120,6 +119,7 @@ int main(void)
 		//err = recvMessage(sc, (char *)&mess, sizeof(char)); // recibe la operación
 
 		listo = 0;
+		printf("Descriptor socket: %d\n",sc);
 		if (pthread_create(&hilo, NULL, (void *)servicio, &sc) != 0)
 		{
 			perror("Error creando thread\n");

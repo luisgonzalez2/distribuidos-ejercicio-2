@@ -65,7 +65,7 @@ struct respuesta mandar_servidor(struct peticion pet)
 	// 4.Pasar struct petición a char
 	mensaje = peticion_to_char(pet);
 	
-
+	printf("Mensaje:%s",mensaje);
 	// 5.Mandar petición
 
 	err = sendMessage(sd, (char *)mensaje, strlen(mensaje) + 1); // Envía petición
@@ -82,7 +82,7 @@ struct respuesta mandar_servidor(struct peticion pet)
 	err = readLine(sd, respuesta, 1024);
 	if (err == -1)
 	{
-		perror("Error en recepcion\n");
+		perror("Error en recepcion2\n");
 		res.respuesta = -1;
 		return res;
 	}
