@@ -76,6 +76,4 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-//IP_TUPLAS=localhost PORT_TUPLAS=8080 ./cliente
-
-
+// IP_TUPLAS=localhost PORT_TUPLAS=8080 ./cliente

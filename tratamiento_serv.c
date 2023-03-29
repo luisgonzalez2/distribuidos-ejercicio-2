@@ -183,7 +183,7 @@ int init()
 // ------------------------------------------------------------------------------------------------------------------
 // Inserta un elemento. Devuelve 0 en caso de éxito y -1 en caso de error (o si la clave ya existe).
 // ------------------------------------------------------------------------------------------------------------------
-int set_value(int clave, char valor1[256], int valor2, double valor3, char q_name[256])
+int set_value(int clave, char valor1[256], int valor2, double valor3)
 {
     DIR *dir = opendir("data");
     if (dir == NULL)
@@ -212,9 +212,8 @@ int set_value(int clave, char valor1[256], int valor2, double valor3, char q_nam
     strcpy(tupla.valor1, valor1);
     tupla.valor2 = valor2;
     tupla.valor3 = valor3;
-    strcpy(tupla.q_name, q_name);
 
-    if (fprintf(fd, "%d,%s,%d,%f,%s\n", tupla.clave, tupla.valor1, tupla.valor2, tupla.valor3, tupla.q_name) < 0)
+    if (fprintf(fd, "%d,%s,%d,%f\n", tupla.clave, tupla.valor1, tupla.valor2, tupla.valor3) < 0)
     {
         fclose(fd);
         perror("fprintf");
@@ -257,7 +256,7 @@ struct respuesta get_value(int clave, char *valor1, int *valor2, double *valor3)
 // Modifica los valores asociados a una key. Devuelve 0 en caso de éxito y -1 en caso de error (o si la clave no
 // existe).
 // ------------------------------------------------------------------------------------------------------------------
-int modify_value(int clave, char valor1[256], int valor2, double valor3, char q_name[256])
+int modify_value(int clave, char valor1[256], int valor2, double valor3)
 {
     char *path = buscar_clave(clave);
     if (path == NULL) // Hay que comprobar que la tupla en la que se modifican valores exista, si no existe, error
@@ -285,7 +284,6 @@ int modify_value(int clave, char valor1[256], int valor2, double valor3, char q_
     strcpy(tupla.valor1, valor1); // Set de valor1
     tupla.valor2 = valor2;        // Set de valor2
     tupla.valor3 = valor3;
-    strcpy(tupla.q_name, q_name);
 
     // Sobreescribe la informacion
     FILE *archivo = fopen(path_copia, "r+"); // Abre el archivo de nuevo en modo escritura
@@ -298,7 +296,7 @@ int modify_value(int clave, char valor1[256], int valor2, double valor3, char q_
 
     // Mover el puntero al inicio del archivo
     fseek(archivo, 0, SEEK_SET);
-    int result = fprintf(archivo, "%d,%s,%d,%f,%s\n", tupla.clave, tupla.valor1, tupla.valor2, tupla.valor3, tupla.q_name);
+    int result = fprintf(archivo, "%d,%s,%d,%f\n", tupla.clave, tupla.valor1, tupla.valor2, tupla.valor3);
     if (result < 0)
     {
         perror("fprintf");
@@ -320,7 +318,6 @@ int modify_value(int clave, char valor1[256], int valor2, double valor3, char q_
 int copy_key(int clave, int clave2)
 {
     char v1[256];
-    char q_name[256];
     int v2;
     double v3;
 
@@ -348,7 +345,7 @@ int copy_key(int clave, int clave2)
     if (path2 == NULL)
     {
         // Si no existe, se crea con la clave nueva un nuevo documento con la clave2 y la info del 1
-        if (set_value(clave2, v1, v2, v3, q_name) == -1)
+        if (set_value(clave2, v1, v2, v3) == -1)
         {
             perror("Error al tomar valores de clave");
             return -1;
@@ -357,7 +354,7 @@ int copy_key(int clave, int clave2)
     else
     {
         // Si existe, eliminar el contenido de dentro de clave2 y añadimos los contenidos de clave
-        modify_value(clave2, v1, v2, v3, q_name);
+        modify_value(clave2, v1, v2, v3);
     }
     return 0;
 }
@@ -381,12 +378,12 @@ struct respuesta tratar_peticion(char mensaje[1024])
         break;
     case 2: // SET_VALUE
         pthread_mutex_lock(&mutex);
-        r.respuesta = set_value(pet.clave, pet.valor1, pet.valor2, pet.valor3, pet.q_name);
+        r.respuesta = set_value(pet.clave, pet.valor1, pet.valor2, pet.valor3);
         pthread_mutex_unlock(&mutex);
         break;
     case 3: // MODIFY_VALUE
         pthread_mutex_lock(&mutex);
-        r.respuesta = modify_value(pet.clave, pet.valor1, pet.valor2, pet.valor3, pet.q_name);
+        r.respuesta = modify_value(pet.clave, pet.valor1, pet.valor2, pet.valor3);
         pthread_mutex_unlock(&mutex);
         break;
     case 4: // EXIST

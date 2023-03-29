@@ -28,7 +28,7 @@ int servicio(void *args)
 	int err = 0;
 
 	pthread_mutex_lock(&m_params);
-	sc_local = (int) *args;
+	sc_local =(int) args;
 	listo = 1;
 	pthread_cond_signal(&cond);
 	pthread_mutex_unlock(&m_params);
@@ -40,7 +40,7 @@ int servicio(void *args)
 	{
 		printf("Error en recepcion\n");
 		close(sc);
-		continue;
+		exit(-1);
 	}
 
 	struct respuesta res = tratar_peticion(mensaje);
@@ -72,7 +72,7 @@ int main(void)
 	val = 1;
 	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(int));
 
-	printf("Abre cola de servidor\n");
+	printf("Abre socket servidor\n");
 	bzero((char *)&server_addr, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY; 

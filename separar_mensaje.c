@@ -20,8 +20,6 @@ void separarMensajePeticion(char * mensaje, int *op, int *clave, char v1[256], i
     token = strtok(NULL, ";");
     *v3 = atof(token); // convertir de big endian a little endian
     token = strtok(NULL, ";");
-    strcpy(q_name, token);
-    token = strtok(NULL, ";");
     *clave2 = atoi(token); // convertir de big endian a little endian
 }
 
@@ -40,7 +38,6 @@ struct peticion char_to_peticion(char *mensaje)
     strcpy(pet.valor1, v1);
     pet.valor2 = v2;
     pet.valor3 = v3;
-    strcpy(pet.q_name, q_name);
     pet.clave2 = clave2;
 
     return pet;
@@ -81,7 +78,7 @@ struct respuesta char_to_respuesta(char * mensaje)
 char *peticion_to_char(struct peticion p)
 {
     char *resultado = malloc(1024);
-    sprintf(resultado, "%d;%d;%s;%d;%.2f;%s;%d;", p.op, p.clave, p.valor1, p.valor2, p.valor3, p.q_name, p.clave2);
+    sprintf(resultado, "%d;%d;%s;%d;%.2f;%d;", p.op, p.clave, p.valor1, p.valor2, p.valor3,p.clave2);
     return resultado;
 }
 

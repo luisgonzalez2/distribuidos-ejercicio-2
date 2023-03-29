@@ -46,7 +46,7 @@ struct respuesta mandar_servidor(struct peticion pet)
 	int port_tuplas;  // Declarar port_tuplas como un puntero a char
 	port_tuplas = atoi(getenv("PORT_TUPLAS"));  // Asignar el valor de la variable de entorno
 	
-	memcpy(&(server_addr.sin_addr), hp->h_addr_list, hp->h_length);
+	memcpy(&(server_addr.sin_addr), hp->h_addr, hp->h_length);
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port_tuplas);
 	
@@ -63,7 +63,7 @@ struct respuesta mandar_servidor(struct peticion pet)
 	}
 	printf("Conecta con el servidor\n");
 	// 4.Pasar struct petición a char
-	char * mensaje = peticion_to_char(pet);
+	mensaje = peticion_to_char(pet);
 	
 
 	// 5.Mandar petición
