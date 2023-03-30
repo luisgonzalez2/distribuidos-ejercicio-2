@@ -87,7 +87,7 @@ struct respuesta mandar_servidor(struct peticion pet)
 		return res;
 	}
 	printf("Respuesta llegó a su destino\n");
-
+	printf("Respuesta en char: %s",respuesta);
 	// 7.Pasar de char a un struct respuesta
 	res = char_to_respuesta(respuesta);
 

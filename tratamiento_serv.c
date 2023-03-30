@@ -366,40 +366,26 @@ struct respuesta tratar_peticion(char mensaje[1024])
     switch (pet.op)
     {
     case 0: // INIT
-        pthread_mutex_lock(&mutex);
         r.respuesta = init();
-        pthread_mutex_unlock(&mutex);
         printf("Respuesta:%d\n", r.respuesta);
         break;
     case 1: // GET_VALUE
-        pthread_mutex_lock(&mutex);
         r = get_value(pet.clave, pet.valor1, &pet.valor2, &pet.valor3);
-        pthread_mutex_unlock(&mutex);
         break;
     case 2: // SET_VALUE
-        pthread_mutex_lock(&mutex);
         r.respuesta = set_value(pet.clave, pet.valor1, pet.valor2, pet.valor3);
-        pthread_mutex_unlock(&mutex);
         break;
     case 3: // MODIFY_VALUE
-        pthread_mutex_lock(&mutex);
         r.respuesta = modify_value(pet.clave, pet.valor1, pet.valor2, pet.valor3);
-        pthread_mutex_unlock(&mutex);
         break;
     case 4: // EXIST
-        pthread_mutex_lock(&mutex);
         r.respuesta = exist(pet.clave);
-        pthread_mutex_unlock(&mutex);
         break;
     case 5: // DELETE_LEY
-        pthread_mutex_lock(&mutex);
         r.respuesta = delete_key(pet.clave);
-        pthread_mutex_unlock(&mutex);
         break;
     case 6: // COPY_KEY
-        pthread_mutex_lock(&mutex);
         r.respuesta = copy_key(pet.clave, pet.clave2);
-        pthread_mutex_unlock(&mutex);
         break;
     }
 

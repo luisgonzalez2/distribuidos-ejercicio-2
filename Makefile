@@ -1,5 +1,5 @@
 # Variables
-CC = gcc
+CC = gcc -g
 CPPFLAGS = -I$(INSTALL_PATH)/include -Wall
 LDFLAGS = -L$(INSTALL_PATH)/lib/ -L.
 LDLIBS = -lclaves -lpthread -lrt -lm

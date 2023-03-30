@@ -34,6 +34,7 @@ int servicio(void *args)
 	pthread_cond_signal(&cond);
 	pthread_mutex_unlock(&m_params);
 	// Con la petición recibida, mandan al hilo esa petición como CHAR
+	pthread_mutex_lock(&m_params);
 	err = readLine(sc_local, mensaje, 1024);
 	if (err == -1)
 	{
@@ -46,9 +47,10 @@ int servicio(void *args)
 	char * msg_respuesta;
 	
 	msg_respuesta = respuesta_to_char(res);
+	printf("Mensaje respuesta:%s\n",msg_respuesta);
 	// Mandar al socket del cliente
 	sendMessage(sc_local, (char *) msg_respuesta, strlen(msg_respuesta) + 1);
-
+	pthread_mutex_unlock(&m_params);
 	free(msg_respuesta);
 	close(sc_local);
 	pthread_exit(NULL);

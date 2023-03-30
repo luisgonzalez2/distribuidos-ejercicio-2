@@ -49,11 +49,26 @@ void separarMensajeRespuesta(char mensaje[1024], int *respuesta, char v1[256], i
     token = strtok(mensaje, ";");
     *respuesta = atoi(token);
     token = strtok(NULL, ";");
-    strcpy(v1, token);
+    if (token != NULL) 
+    {
+        strcpy(v1, token);
+    } else {
+        strcpy(v1, "");
+    }
     token = strtok(NULL, ";");
-    *v2 = atoi(token); // convertir de big endian a little endian
+    if (token != NULL) 
+    {
+        *v2=atoi(token);
+    } else {
+        *v2=0;
+    }
     token = strtok(NULL, ";");
-    *v3 = atof(token); // convertir de big endian a little endian
+    if (token != NULL) 
+    {
+        *v3 = atof(token);
+    } else {
+        *v3 = 0.0;
+    }
 }
 
 // Transforma la cadena de caracteres en estructuras de tipo respuesta que usamos en el servidor
