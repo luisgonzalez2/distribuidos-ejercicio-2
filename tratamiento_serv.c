@@ -261,7 +261,7 @@ int modify_value(int clave, char valor1[256], int valor2, double valor3)
     char *path = buscar_clave(clave);
     if (path == NULL) // Hay que comprobar que la tupla en la que se modifican valores exista, si no existe, error
     {
-        printf("buscar_clave");
+        perror("buscar_clave");
         return -1;
     }
 
@@ -289,7 +289,7 @@ int modify_value(int clave, char valor1[256], int valor2, double valor3)
     FILE *archivo = fopen(path_copia, "r+"); // Abre el archivo de nuevo en modo escritura
     if (archivo == NULL)
     {
-        printf("No se pudo abrir el archivo\n");
+        perror("No se pudo abrir el archivo\n");
         free(path_copia);
         return -1;
     }
@@ -388,6 +388,5 @@ struct respuesta tratar_peticion(char mensaje[1024])
         r.respuesta = copy_key(pet.clave, pet.clave2);
         break;
     }
-
     return r;
 }

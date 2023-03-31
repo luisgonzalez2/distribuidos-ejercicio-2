@@ -6,21 +6,21 @@
 #include "mensaje.h"
 
 // Función auxiliar que separa los elementos de la cadena de caracteres en variables
-void separarMensajePeticion(char * mensaje, int *op, int *clave, char v1[256], int *v2, double *v3, char q_name[256], int *clave2)
+void separarMensajePeticion(char *mensaje, int *op, int *clave, char v1[256], int *v2, double *v3, char q_name[256], int *clave2)
 {
     char *token;
     token = strtok(mensaje, ";");
-    *op = atoi(token); // convertir de big endian a little endian
+    *op = atoi(token);
     token = strtok(NULL, ";");
-    *clave = atoi(token); // convertir de big endian a little endian
+    *clave = atoi(token);
     token = strtok(NULL, ";");
     strcpy(v1, token);
     token = strtok(NULL, ";");
-    *v2 = atoi(token); // convertir de big endian a little endian
+    *v2 = atoi(token);
     token = strtok(NULL, ";");
-    *v3 = atof(token); // convertir de big endian a little endian
+    *v3 = atof(token);
     token = strtok(NULL, ";");
-    *clave2 = atoi(token); // convertir de big endian a little endian
+    *clave2 = atoi(token);
 }
 
 // Transforma la cadena de caracteres en estructuras de tipo petición que usamos en el servidor
@@ -45,34 +45,41 @@ struct peticion char_to_peticion(char *mensaje)
 
 // Función auxiliar que separa los elementos de la cadena de caracteres en variables
 void separarMensajeRespuesta(char mensaje[1024], int *respuesta, char v1[256], int *v2, double *v3)
-{   char *token;
+{
+    char *token;
     token = strtok(mensaje, ";");
     *respuesta = atoi(token);
     token = strtok(NULL, ";");
-    if (token != NULL) 
+    if (token != NULL)
     {
         strcpy(v1, token);
-    } else {
+    }
+    else
+    {
         strcpy(v1, "");
     }
     token = strtok(NULL, ";");
-    if (token != NULL) 
+    if (token != NULL)
     {
-        *v2=atoi(token);
-    } else {
-        *v2=0;
+        *v2 = atoi(token);
+    }
+    else
+    {
+        *v2 = 0;
     }
     token = strtok(NULL, ";");
-    if (token != NULL) 
+    if (token != NULL)
     {
         *v3 = atof(token);
-    } else {
+    }
+    else
+    {
         *v3 = 0.0;
     }
 }
 
 // Transforma la cadena de caracteres en estructuras de tipo respuesta que usamos en el servidor
-struct respuesta char_to_respuesta(char * mensaje)
+struct respuesta char_to_respuesta(char *mensaje)
 {
     char v1[256];
     int respuesta, v2;
@@ -93,7 +100,7 @@ struct respuesta char_to_respuesta(char * mensaje)
 char *peticion_to_char(struct peticion p)
 {
     char *resultado = malloc(1024);
-    sprintf(resultado, "%d;%d;%s;%d;%.2f;%d;", p.op, p.clave, p.valor1, p.valor2, p.valor3,p.clave2);
+    sprintf(resultado, "%d;%d;%s;%d;%.2f;%d;", p.op, p.clave, p.valor1, p.valor2, p.valor3, p.clave2);
     return resultado;
 }
 
@@ -104,4 +111,3 @@ char *respuesta_to_char(struct respuesta r)
     sprintf(resultado, "%d;%s;%d;%.2f;", r.respuesta, r.valor1, r.valor2, r.valor3);
     return resultado;
 }
-

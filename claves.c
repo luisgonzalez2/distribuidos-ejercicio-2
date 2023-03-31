@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <netdb.h>
 #include <strings.h>
 #include <string.h>
@@ -11,7 +11,6 @@
 #include "lines.h"
 #include "separar_mensaje.h"
 
-
 struct respuesta mandar_servidor(struct peticion pet)
 {
 	int sd;
@@ -20,38 +19,33 @@ struct respuesta mandar_servidor(struct peticion pet)
 	int err;
 	struct respuesta res;
 	char respuesta[1024];
-	char * mensaje;
+	char *mensaje;
 
-	// 1. Abre socket del usuario	
+	// 1. Abre socket del usuario
 	sd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sd == 1)
 	{
-		printf("Error en socket\n");
+		perror("Error en socket\n");
 		res.respuesta = -1;
 		return res;
 	}
 
 	// 2. Abrir socket del servidor
-	char *ip_tuplas;
-
-	ip_tuplas = getenv("IP_TUPLAS");
+	char *ip_tuplas = getenv("IP_TUPLAS");
+	int port_tuplas = atoi(getenv("PORT_TUPLAS"));
 	bzero((char *)&server_addr, sizeof(server_addr));
-	hp = gethostbyname (ip_tuplas);
+	hp = gethostbyname(ip_tuplas);
 	if (hp == NULL)
 	{
-		printf("Error en gethostbyaddr\n");
+		perror("Error en gethostbyaddr\n");
 		res.respuesta = -1;
 		return res;
 	}
-	int port_tuplas;  // Declarar port_tuplas como un puntero a char
-	port_tuplas = atoi(getenv("PORT_TUPLAS"));  // Asignar el valor de la variable de entorno
-	
+
 	memcpy(&(server_addr.sin_addr), hp->h_addr, hp->h_length);
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port_tuplas);
-	
 	printf("Conoce al servidor\n");
-
 
 	// 3.Establece la conexión
 	err = connect(sd, (struct sockaddr *)&server_addr, sizeof(server_addr));
@@ -62,12 +56,12 @@ struct respuesta mandar_servidor(struct peticion pet)
 		return res;
 	}
 	printf("Conecta con el servidor\n");
+
 	// 4.Pasar struct petición a char
 	mensaje = peticion_to_char(pet);
-	
-	printf("Mensaje:%s",mensaje);
-	// 5.Mandar petición
+	printf("Mensaje:%s", mensaje);
 
+	// 5.Mandar petición
 	err = sendMessage(sd, (char *)mensaje, strlen(mensaje) + 1); // Envía petición
 	if (err == -1)
 	{
@@ -78,7 +72,6 @@ struct respuesta mandar_servidor(struct peticion pet)
 	printf("Mensaje mandado\n");
 
 	// 6.Recibir respuesta
-	//err = recvMessage(sd, (char *)&respuesta, sizeof(respuesta)); // Recibe respuesta
 	err = readLine(sd, respuesta, 1024);
 	if (err == -1)
 	{
@@ -87,7 +80,8 @@ struct respuesta mandar_servidor(struct peticion pet)
 		return res;
 	}
 	printf("Respuesta llegó a su destino\n");
-	printf("Respuesta en char: %s",respuesta);
+	printf("Respuesta en char: %s", respuesta);
+
 	// 7.Pasar de char a un struct respuesta
 	res = char_to_respuesta(respuesta);
 

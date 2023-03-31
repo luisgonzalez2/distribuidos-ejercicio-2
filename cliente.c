@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
     // INIT -------------------------------------------------------------------------------
     if (init() != 0)
     { // Maneja cualquier error que se produzca al inicializar el cliente
-        printf("Error en init\n");
+        perror("Error en init\n");
         return -1;
     }
 
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     printf("Set\n");
     if (set_value(clave, valor1, valor2, valor3) != 0)
     { // Maneja cualquier error que se produzca al configurar el cliente
-        printf("Error en set\n");
+        perror("Error en set\n");
         return -1;
     }
 
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
     printf("Get\n");
     if (get_value(clave, valor1g, &valor2g, &valor3g) != 0)
     { // Maneja cualquier error que se produzca al configurar el cliente
-        printf("Error en get\n");
+        perror("Error en get\n");
         return -1;
     }
 
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     printf("Modify\n");
     if (modify_value(clave, valor1m, valor2m, valor3m) != 0)
     { // Maneja cualquier error que se produzca al configurar el cliente
-        printf("Error en modify\n");
+        perror("Error en modify\n");
         return -1;
     }
 
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     printf("Exist\n");
     if (exist(clave) < 0)
     { // Maneja cualquier error que se produzca al configurar el cliente
-        printf("Error en exist\n");
+        perror("Error en exist\n");
         return -1;
     }
 
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
     printf("Copy\n");
     if (copy_key(clave_1, clave_2) != 0)
     { // Maneja cualquier error que se produzca al configurar el cliente
-        printf("Error en copy\n");
+        perror("Error en copy\n");
         return -1;
     }
 
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     printf("Delete\n");
     if (delete_key(clave) < 0)
     { // Maneja cualquier error que se produzca al configurar el cliente
-        printf("Error en delete\n");
+        perror("Error en delete\n");
         return -1;
     }
 

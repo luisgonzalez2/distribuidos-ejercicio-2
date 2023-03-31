@@ -15,16 +15,16 @@ int sendMessage(int socket, char *buffer, int len)
 		buffer = buffer + r;
 	} while ((l > 0) && (r >= 0));
 
-	if (r < 0){
-		printf("Fallo\n");
-		return (-1); /* fail */
+	if (r < 0)
+	{
+		perror("Fallo\n");
+		return (-1);
 	}
-		
 	else
 	{
 		printf("Exito\n");
-		return (0); /* full length has been sent */
-	}	
+		return (0);
+	}
 }
 
 int recvMessage(int socket, char *buffer, int len)
@@ -40,15 +40,15 @@ int recvMessage(int socket, char *buffer, int len)
 	} while ((l > 0) && (r >= 0));
 
 	if (r < 0)
-		return (-1); /* fallo */
+		return (-1);
 	else
-		return (0); /* full length has been receive */
+		return (0);
 }
 
 ssize_t readLine(int fd, void *buffer, size_t n)
 {
-	ssize_t numRead; /* num of bytes fetched by last read() */
-	size_t totRead;	 /* total bytes read so far */
+	ssize_t numRead;
+	size_t totRead;
 	char *buf;
 	char ch;
 
