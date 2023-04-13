@@ -10,17 +10,59 @@ void separarMensajePeticion(char *mensaje, int *op, int *clave, char v1[256], in
 {
     char *token;
     token = strtok(mensaje, ";");
-    *op = atoi(token);
+    if (token != NULL)
+    {
+        *op = atoi(token);
+    }
+    else
+    {
+        *op = 0;
+    }
     token = strtok(NULL, ";");
-    *clave = atoi(token);
+    if (token != NULL)
+    {
+        *clave = atoi(token);
+    }
+    else
+    {
+        *clave = 0;
+    }
     token = strtok(NULL, ";");
-    strcpy(v1, token);
+    if (token != NULL)
+    {
+        strcpy(v1, token);
+    }
+    else
+    {
+        strcpy(v1, "");
+    }
     token = strtok(NULL, ";");
-    *v2 = atoi(token);
+    if (token != NULL)
+    {
+        *v2 = atoi(token);
+    }
+    else
+    {
+        *v2 = 0;
+    }
     token = strtok(NULL, ";");
-    *v3 = atof(token);
+    if (token != NULL)
+    {
+        *v3 = atof(token);
+    }
+    else
+    {
+        *v3 = 0.0;
+    }
     token = strtok(NULL, ";");
-    *clave2 = atoi(token);
+    if (token != NULL)
+    {
+        *clave2 = atoi(token);
+    }
+    else
+    {
+        *clave2 = 0;
+    }
 }
 
 // Transforma la cadena de caracteres en estructuras de tipo petición que usamos en el servidor

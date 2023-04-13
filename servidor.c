@@ -65,7 +65,6 @@ int main(void)
 	socklen_t size;
 	int val;
 	int err;
-	char mensaje[1024];
 
 	// 1. Abre socket del servidor
 	if ((sd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -107,7 +106,6 @@ int main(void)
 
 	while (1)
 	{
-		struct peticion mess; // Mensaje a recibir
 		pthread_t hilo;
 		// Recibe el mensaje mandado por claves.c en su cola servidor
 		printf("esperando conexion\n");

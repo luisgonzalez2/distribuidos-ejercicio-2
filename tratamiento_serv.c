@@ -16,8 +16,6 @@
 #define SERVIDOR "/SERVIDOR"
 #define CLIENTE "/CLIENTE"
 
-mqd_t cola_cliente;    // Cola cliente
-struct mq_attr attr;   // Atributos de cola de mensajes POSIX
 char buffer[5];        // Buffer que almacena mensajes recibidos
 struct peticion tupla; // Struct para los mensajes de petición
 struct respuesta r;    // Struct para los mensajes de respuesta
@@ -67,7 +65,10 @@ char *buscar_clave(int clave)
             if (clave == clave_doc)
             {
                 fclose(archivoabrir);
-                closedir(dir);
+                if(closedir(dir)==-1){
+                    perror("closedir:");
+                    return NULL;
+                }
                 return path;
             }
             fclose(archivoabrir);
@@ -75,7 +76,11 @@ char *buscar_clave(int clave)
     }
     free(path);  // Liberar memoria dinámicamente asignada
     path = NULL; // Resetear el puntero para evitar errores
-    closedir(dir);
+    if(closedir(dir)==-1)
+    {
+        perror("closedir:");
+        return NULL;
+    }
     return NULL; // Si no se encontró un archivo que coincida con la clave, devolver NULL
 }
 
@@ -102,8 +107,14 @@ int delete_key(int clave)
     if (exist(clave) == 1)
     {
         char *path = buscar_clave(clave);
-        // FILE* fd =fopen(path,'r');
-        remove(path);
+        if (path == NULL)
+        {
+            return -1; // Error en buscar clave
+        }
+        if(remove(path)== -1){
+            perror("remove");
+            return -1;
+        }
         free(path); // Liberar memoria asignada a "path"
     }
     else
@@ -129,7 +140,10 @@ int eliminar_tuplas()
     if (chdir("data") == -1)
     {
         perror("No se pudo cambiar al directorio 'data'");
-        closedir(dir);
+        if(closedir(dir)==-1){
+            perror("closedir:");
+            return -1;
+        }
         return -1;
     }
     struct dirent *entry;
@@ -159,7 +173,11 @@ int eliminar_tuplas()
     if (chdir("..") == -1)
     {
         perror("No se pudo volver al directorio anterior");
-        closedir(dir);
+        
+        if(closedir(dir)==-1){
+            perror("closedir:");
+            return -1;
+        }
         return -1;
     }
     closedir(dir);
@@ -191,7 +209,11 @@ int set_value(int clave, char valor1[256], int valor2, double valor3)
         perror("Error al abrir el directorio 'data'");
         return -1;
     }
-    closedir(dir);
+    if(closedir(dir)==-1)
+    {
+        perror("closedir:");
+        return -1;
+    }
 
     char filename[1024];
     snprintf(filename, 1024, "data/%d.txt", clave);
@@ -213,7 +235,7 @@ int set_value(int clave, char valor1[256], int valor2, double valor3)
     tupla.valor2 = valor2;
     tupla.valor3 = valor3;
 
-    if (fprintf(fd, "%d,%s,%d,%f\n", tupla.clave, tupla.valor1, tupla.valor2, tupla.valor3) < 0)
+    if (fprintf(fd, "%d,%s,%d,%lf\n", tupla.clave, tupla.valor1, tupla.valor2, tupla.valor3) < 0)
     {
         fclose(fd);
         perror("fprintf");
@@ -228,11 +250,9 @@ int set_value(int clave, char valor1[256], int valor2, double valor3)
 // ------------------------------------------------------------------------------------------------------------------
 // Obtiene valores asociados a una key. Devuelve 0 en caso de éxito y -1 en caso de error (o si la clave no existe).
 // ------------------------------------------------------------------------------------------------------------------
-struct respuesta get_value(int clave, char *valor1, int *valor2, double *valor3)
+struct respuesta get_value(int clave)
 {
-    char queuename[100];
     char *archivo = buscar_clave(clave);
-
     struct respuesta get;
     if (archivo != NULL) // Copiar los valores asociados a la clave
     {
@@ -240,8 +260,7 @@ struct respuesta get_value(int clave, char *valor1, int *valor2, double *valor3)
         char *archivo_copia = (char *)malloc(strlen(archivo) + 1);
         strcpy(archivo_copia, archivo);
         FILE *archivoabrir = fopen(archivo_copia, "r");
-        fscanf(archivoabrir, "%d,%[^,],%d,%lf,%[^,]", &clave, get.valor1, &get.valor2, &get.valor3, queuename);
-        printf("Valor2 cogido:%d\n", get.valor2);
+        fscanf(archivoabrir,"%d,%[^,],%d,%lf", &clave, get.valor1, &get.valor2, &get.valor3);
         free(archivo_copia);
         get.respuesta = 0;
     }
@@ -330,14 +349,14 @@ int copy_key(int clave, int clave2)
     else
     {
         // Coger la info de la tupla
-        if (get_value(clave, v1, &v2, &v3).respuesta == -1)
+        if (get_value(clave).respuesta == -1)
         {
             perror("Error al tomar valores de clave");
             return -1;
         }
-        strcpy(v1, get_value(clave, v1, &v2, &v3).valor1);
-        v2 = get_value(clave, v1, &v2, &v3).valor2;
-        v3 = get_value(clave, v1, &v2, &v3).valor3;
+        strcpy(v1, get_value(clave).valor1);
+        v2 = get_value(clave).valor2;
+        v3 = get_value(clave).valor3;
     }
 
     // 2. Ver si clave2 está en el programa
@@ -362,6 +381,7 @@ int copy_key(int clave, int clave2)
 struct respuesta tratar_peticion(char mensaje[1024])
 {
     struct peticion pet = char_to_peticion(mensaje);
+    printf("Hola\n");
     struct respuesta r;
     switch (pet.op)
     {
@@ -370,7 +390,7 @@ struct respuesta tratar_peticion(char mensaje[1024])
         printf("Respuesta:%d\n", r.respuesta);
         break;
     case 1: // GET_VALUE
-        r = get_value(pet.clave, pet.valor1, &pet.valor2, &pet.valor3);
+        r = get_value(pet.clave);
         break;
     case 2: // SET_VALUE
         r.respuesta = set_value(pet.clave, pet.valor1, pet.valor2, pet.valor3);

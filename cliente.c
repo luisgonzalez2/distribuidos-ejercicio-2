@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
         perror("Error en init\n");
         return -1;
     }
-
+    /*
     // SET_VALUE --------------------------------------------------------------------------
     int clave = 1;
     char valor1[256] = "Hola";
@@ -34,9 +34,6 @@ int main(int argc, char *argv[])
         perror("Error en get\n");
         return -1;
     }
-
-    printf("Valor2 devuelto: %d\n", valor2);
-
     // MODIFY_VALUE -----------------------------------------------------------------------
     char valor1m[256] = "Leche";
     int valor2m = 8;
@@ -74,6 +71,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    return 0;
+    return 0;*/
 }
 // IP_TUPLAS=localhost PORT_TUPLAS=8080 ./cliente
