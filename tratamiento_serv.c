@@ -189,7 +189,6 @@ int eliminar_tuplas()
 // ------------------------------------------------------------------------------------------------------------------
 int init()
 {
-    printf("Entró en init\n");
     if (eliminar_tuplas() == -1) // Eliminar todas las tuplas almacenadas previamente
     {
         perror("eliminar_tuplas()");

@@ -45,7 +45,6 @@ struct respuesta mandar_servidor(struct peticion pet)
 	memcpy(&(server_addr.sin_addr), hp->h_addr, hp->h_length);
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port_tuplas);
-	printf("Conoce al servidor\n");
 
 	// 3.Establece la conexión
 	err = connect(sd, (struct sockaddr *)&server_addr, sizeof(server_addr));
@@ -55,11 +54,8 @@ struct respuesta mandar_servidor(struct peticion pet)
 		res.respuesta = -1;
 		return res;
 	}
-	printf("Conecta con el servidor\n");
-
 	// 4.Pasar struct petición a char
 	mensaje = peticion_to_char(pet);
-	printf("Mensaje:%s", mensaje);
 
 	// 5.Mandar petición
 	err = sendMessage(sd, (char *)mensaje, strlen(mensaje) + 1); // Envía petición
@@ -69,7 +65,6 @@ struct respuesta mandar_servidor(struct peticion pet)
 		res.respuesta = -1;
 		return res;
 	}
-	printf("Mensaje mandado\n");
 
 	// 6.Recibir respuesta
 	err = readLine(sd, respuesta, 1024);
@@ -79,9 +74,6 @@ struct respuesta mandar_servidor(struct peticion pet)
 		res.respuesta = -1;
 		return res;
 	}
-	printf("Respuesta llegó a su destino\n");
-	printf("Respuesta en char: %s", respuesta);
-
 	// 7.Pasar de char a un struct respuesta
 	res = char_to_respuesta(respuesta);
 

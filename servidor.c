@@ -44,12 +44,11 @@ int servicio(void *args)
 		exit(-1);
 	}
 
-	printf("Recibe el msg\n");
+	//printf("Recibe el msg\n");
 	struct respuesta res = tratar_peticion(mensaje);
 	char *msg_respuesta;
 
 	msg_respuesta = respuesta_to_char(res);
-	printf("Mensaje respuesta:%s\n", msg_respuesta);
 
 	// Mandar al socket del cliente
 	sendMessage(sc_local, (char *)msg_respuesta, strlen(msg_respuesta) + 1);
@@ -74,7 +73,7 @@ int main(void)
 	}
 	val = 1;
 	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(int));
-	printf("Abre socket servidor\n");
+	//printf("Abre socket servidor\n");
 	bzero((char *)&server_addr, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;
@@ -108,7 +107,7 @@ int main(void)
 	{
 		pthread_t hilo;
 		// Recibe el mensaje mandado por claves.c en su cola servidor
-		printf("esperando conexion\n");
+		printf("Esperando conexion...\n");
 		//----Acepta conexión
 		sc = accept(sd, (struct sockaddr *)&client_addr, (socklen_t *)&size);
 		if (sc == -1)
@@ -121,7 +120,6 @@ int main(void)
 		// err = recvMessage(sc, (char *)&mess, sizeof(char)); // recibe la operación
 
 		listo = 0;
-		printf("Descriptor socket: %d\n", sc);
 		if (pthread_create(&hilo, NULL, (void *)servicio, &sc) != 0)
 		{
 			perror("Error creando thread\n");
