@@ -7,25 +7,24 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include "mensaje.h"
-#include "lines.h"
-#include "separar_mensaje.h"
+#include "mensaje.h"		 // Struct 'peticion' y 'respuesta'
+#include "lines.h"			 // Funciones 'sendMessage' y 'readLine'
+#include "separar_mensaje.h" // Función 'char_to_respuesta'
 
 struct respuesta mandar_servidor(struct peticion pet)
 {
-	int sd;
-	struct sockaddr_in server_addr;
-	struct hostent *hp;
-	int err;
+	int sd, err;
 	struct respuesta res;
 	char respuesta[1024];
 	char *mensaje;
+	struct hostent *hp = NULL;
+	struct sockaddr_in server_addr = {0};
 
 	// 1. Abre socket del usuario
 	sd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sd == 1)
 	{
-		perror("Error en socket\n");
+		perror("Error al crear el socket\n");
 		res.respuesta = -1;
 		return res;
 	}
@@ -37,7 +36,8 @@ struct respuesta mandar_servidor(struct peticion pet)
 	hp = gethostbyname(ip_tuplas);
 	if (hp == NULL)
 	{
-		perror("Error en gethostbyaddr\n");
+		perror("Error al obtener el host\n");
+		close(sd);
 		res.respuesta = -1;
 		return res;
 	}
@@ -46,35 +46,42 @@ struct respuesta mandar_servidor(struct peticion pet)
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port_tuplas);
 
-	// 3.Establece la conexión
+	// 3. Establece la conexión
 	err = connect(sd, (struct sockaddr *)&server_addr, sizeof(server_addr));
 	if (err == -1)
 	{
-		perror("Error en connect\n");
+		perror("Error al establecer la conexión\n");
+		close(sd);
 		res.respuesta = -1;
 		return res;
 	}
-	// 4.Pasar struct petición a char
+
+	// 4. Pasar struct petición a char
 	mensaje = peticion_to_char(pet);
 
-	// 5.Mandar petición
+	// 5. Mandar petición
 	err = sendMessage(sd, (char *)mensaje, strlen(mensaje) + 1); // Envía petición
 	if (err == -1)
 	{
-		perror("Error en envio\n");
+		perror("Error al enviar el mensaje\n");
+		close(sd);
+		free(mensaje);
 		res.respuesta = -1;
 		return res;
 	}
 
-	// 6.Recibir respuesta
+	// 6. Recibir respuesta
 	err = readLine(sd, respuesta, 1024);
 	if (err == -1)
 	{
-		perror("Error en recepcion2\n");
+		perror("Error al recibir la respuesta\n");
+		close(sd);
+        free(mensaje);
 		res.respuesta = -1;
 		return res;
 	}
-	// 7.Pasar de char a un struct respuesta
+
+	// 7. Pasar de char a un struct respuesta
 	res = char_to_respuesta(respuesta);
 
 	//  8. Cerramos colas

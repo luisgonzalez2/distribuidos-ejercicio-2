@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
         perror("Error en init\n");
         return -1;
     }
+
     // SET_VALUE --------------------------------------------------------------------------
     int clave = 1;
     char valor1[256] = "Hola";
@@ -33,9 +34,10 @@ int main(int argc, char *argv[])
         perror("Error en get\n");
         return -1;
     }
-    printf("Valor1:%s\n",valor1g);
-    printf("Valor2:%d\n",valor2g);
-    printf("Valor3:%lf\n",valor3g);
+    printf("Valor1:%s\n", valor1g);
+    printf("Valor2:%d\n", valor2g);
+    printf("Valor3:%lf\n", valor3g);
+
     // MODIFY_VALUE -----------------------------------------------------------------------
     char valor1m[256] = "Leche";
     int valor2m = 8;
@@ -46,9 +48,10 @@ int main(int argc, char *argv[])
         perror("Error en modify\n");
         return -1;
     }
+
     // EXIST ------------------------------------------------------------------------------
     printf("Exist\n");
-    int respuesta=exist(clave);
+    int respuesta = exist(clave);
     if (respuesta < 0)
     { // Maneja cualquier error que se produzca al configurar el cliente
         perror("Error en exist\n");
@@ -62,6 +65,7 @@ int main(int argc, char *argv[])
     {
         printf("Existe la clave\n");
     }
+
     // COPY_KEY ---------------------------------------------------------------------------
     int clave_1 = 1;
     int clave_2 = 2;

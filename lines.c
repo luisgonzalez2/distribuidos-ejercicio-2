@@ -7,14 +7,12 @@ int sendMessage(int socket, char *buffer, int len)
 {
 	int r;
 	int l = len;
-
 	do
 	{
 		r = write(socket, buffer, l);
 		l = l - r;
 		buffer = buffer + r;
 	} while ((l > 0) && (r >= 0));
-
 	if (r < 0)
 	{
 		perror("Fallo\n");
@@ -31,14 +29,12 @@ int recvMessage(int socket, char *buffer, int len)
 {
 	int r;
 	int l = len;
-
 	do
 	{
 		r = read(socket, buffer, l);
 		l = l - r;
 		buffer = buffer + r;
 	} while ((l > 0) && (r >= 0));
-
 	if (r < 0)
 		return (-1);
 	else
@@ -51,20 +47,16 @@ ssize_t readLine(int fd, void *buffer, size_t n)
 	size_t totRead;
 	char *buf;
 	char ch;
-
 	if (n <= 0 || buffer == NULL)
 	{
 		errno = EINVAL;
 		return -1;
 	}
-
 	buf = buffer;
 	totRead = 0;
-
 	for (;;)
 	{
 		numRead = read(fd, &ch, 1); /* read a byte */
-
 		if (numRead == -1)
 		{
 			if (errno == EINTR) /* interrupted -> restart read() */
@@ -92,7 +84,6 @@ ssize_t readLine(int fd, void *buffer, size_t n)
 			}
 		}
 	}
-
 	*buf = '\0';
 	return totRead;
 }

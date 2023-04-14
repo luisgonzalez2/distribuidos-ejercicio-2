@@ -26,13 +26,16 @@ int servicio(void *args)
 	char mensaje[1024];
 	int sc_local;
 	int err = 0;
+
 	printf("En el hilo\n");
+
 	pthread_mutex_lock(&m_params);
 	sc_local = (*(int *)args);
 	printf("Socket:%d\n", sc_local);
 	listo = 1;
 	pthread_cond_signal(&cond);
 	pthread_mutex_unlock(&m_params);
+
 	// Con la petición recibida, mandan al hilo esa petición como CHAR
 	pthread_mutex_lock(&m_params);
 	err = readLine(sc_local, mensaje, 1024);
@@ -44,15 +47,22 @@ int servicio(void *args)
 		exit(-1);
 	}
 
-	//printf("Recibe el msg\n");
 	struct respuesta res = tratar_peticion(mensaje);
 	char *msg_respuesta;
-
 	msg_respuesta = respuesta_to_char(res);
 
 	// Mandar al socket del cliente
-	sendMessage(sc_local, (char *)msg_respuesta, strlen(msg_respuesta) + 1);
+	err = sendMessage(sc_local, (char *)msg_respuesta, strlen(msg_respuesta) + 1);
+	if (err == -1)
+	{
+		perror("Error en envio de mensaje\n");
+		close(sc_local);
+		free(msg_respuesta);
+		pthread_exit(NULL);
+	}
+
 	pthread_mutex_unlock(&m_params);
+
 	free(msg_respuesta);
 	close(sc_local);
 	pthread_exit(NULL);
@@ -62,8 +72,7 @@ int main(void)
 {
 	struct sockaddr_in server_addr, client_addr;
 	socklen_t size;
-	int val;
-	int err;
+	int val, err;
 
 	// 1. Abre socket del servidor
 	if ((sd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -71,9 +80,10 @@ int main(void)
 		perror("SERVER: Error en el socket");
 		return (0);
 	}
+
 	val = 1;
 	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *)&val, sizeof(int));
-	//printf("Abre socket servidor\n");
+
 	bzero((char *)&server_addr, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;
@@ -108,12 +118,12 @@ int main(void)
 		pthread_t hilo;
 		// Recibe el mensaje mandado por claves.c en su cola servidor
 		printf("Esperando conexion...\n");
-		//----Acepta conexión
+		// Acepta conexión
 		sc = accept(sd, (struct sockaddr *)&client_addr, (socklen_t *)&size);
 		if (sc == -1)
 		{
 			perror("Error en accept\n");
-			return -1;
+			continue; // Volver a intentar aceptar conexiones
 		}
 		printf("Conexión aceptada de IP: %s Puerto: %d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 		// Recibe mensaje
@@ -123,8 +133,10 @@ int main(void)
 		if (pthread_create(&hilo, NULL, (void *)servicio, &sc) != 0)
 		{
 			perror("Error creando thread\n");
-			return 0;
+			close(sc); // Cerrar conexión
+			continue;  // Volver a intentar aceptar conexiones
 		}
+
 		// Hasta que el hilo creado no tome la petición, no se crean más hilos
 		pthread_mutex_lock(&m_params);
 		while (!listo)

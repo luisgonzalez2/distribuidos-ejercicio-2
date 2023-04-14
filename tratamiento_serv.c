@@ -24,13 +24,13 @@ pthread_mutex_t mutex;
 char *buscar_clave(int clave)
 {
     struct dirent *entry;
-    char *path;
+    char *path = NULL;
     FILE *archivoabrir;
     DIR *dir = opendir("data");
     if (dir == NULL)
     {
         perror("No se pudo abrir el directorio");
-        exit(-1);
+        return NULL;
     }
     while ((entry = readdir(dir)) != NULL)
     {
@@ -46,10 +46,9 @@ char *buscar_clave(int clave)
         }
         if (S_ISREG(file_stat.st_mode))
         {
-            // char path[100];
             path = (char *)malloc(strlen(filename) + 10); // Reserva memoria dinámicamente
             sprintf(path, "data/%s", entry->d_name);
-            // Abrir archivo
+
             archivoabrir = fopen(path, "r");
             if (archivoabrir == NULL) // Verificar si el archivo se pudo abrir
             {
@@ -58,15 +57,19 @@ char *buscar_clave(int clave)
                 path = NULL; // Resetear el puntero a NULL
                 continue;
             }
-            // Lee el primer elemento del archivo(la clave) y compara
+
+            // Lee el primer elemento del archivo (la clave) y compara
             int clave_doc;
             fscanf(archivoabrir, "%d", &clave_doc);
-            // Compara si son iguales,si es así corta el bucle y devuelve el nombre del archivo
+            // Compara si son iguales, si es así corta el bucle y devuelve el nombre del archivo
             if (clave == clave_doc)
             {
                 fclose(archivoabrir);
-                if(closedir(dir)==-1){
+                if (closedir(dir) == -1)
+                {
                     perror("closedir:");
+                    free(path);  // Liberar la memoria asignada a "path"
+                    path = NULL; // Resetear el puntero a NULL
                     return NULL;
                 }
                 return path;
@@ -74,11 +77,15 @@ char *buscar_clave(int clave)
             fclose(archivoabrir);
         }
     }
+
     free(path);  // Liberar memoria dinámicamente asignada
     path = NULL; // Resetear el puntero para evitar errores
-    if(closedir(dir)==-1)
+
+    if (closedir(dir) == -1)
     {
         perror("closedir:");
+        free(path);  // Liberar la memoria asignada a "path"
+        path = NULL; // Resetear el puntero a NULL
         return NULL;
     }
     return NULL; // Si no se encontró un archivo que coincida con la clave, devolver NULL
@@ -93,10 +100,7 @@ int exist(int clave)
     {
         return 0; // No hay clave
     }
-    else
-    {
-        return 1;
-    }
+    return 1;
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -111,7 +115,8 @@ int delete_key(int clave)
         {
             return -1; // Error en buscar clave
         }
-        if(remove(path)== -1){
+        if (remove(path) == -1)
+        {
             perror("remove");
             return -1;
         }
@@ -120,7 +125,6 @@ int delete_key(int clave)
     else
     {
         printf("La clave no está insertada\n");
-
         return -1;
     }
     return 0;
@@ -140,7 +144,8 @@ int eliminar_tuplas()
     if (chdir("data") == -1)
     {
         perror("No se pudo cambiar al directorio 'data'");
-        if(closedir(dir)==-1){
+        if (closedir(dir) == -1)
+        {
             perror("closedir:");
             return -1;
         }
@@ -173,8 +178,9 @@ int eliminar_tuplas()
     if (chdir("..") == -1)
     {
         perror("No se pudo volver al directorio anterior");
-        
-        if(closedir(dir)==-1){
+
+        if (closedir(dir) == -1)
+        {
             perror("closedir:");
             return -1;
         }
@@ -208,7 +214,7 @@ int set_value(int clave, char valor1[256], int valor2, double valor3)
         perror("Error al abrir el directorio 'data'");
         return -1;
     }
-    if(closedir(dir)==-1)
+    if (closedir(dir) == -1)
     {
         perror("closedir:");
         return -1;
@@ -220,16 +226,20 @@ int set_value(int clave, char valor1[256], int valor2, double valor3)
     FILE *fd = fopen(filename, "w, ccs=UTF-8");
     if (fd == NULL)
     {
-        perror("open");
+        perror("Error al abrir el archivo");
         return -1;
     }
+
     struct peticion tupla;
     tupla.clave = clave;
+
     if (strlen(valor1) > 255)
     {
-        perror("Valor de cadena de caracteres mayor al permitido");
+        fclose(fd);
+        fprintf(stderr, "Error: valor de cadena de caracteres mayor al permitido\n");
         return -1;
     }
+
     strcpy(tupla.valor1, valor1);
     tupla.valor2 = valor2;
     tupla.valor3 = valor3;
@@ -237,11 +247,15 @@ int set_value(int clave, char valor1[256], int valor2, double valor3)
     if (fprintf(fd, "%d,%s,%d,%lf\n", tupla.clave, tupla.valor1, tupla.valor2, tupla.valor3) < 0)
     {
         fclose(fd);
-        perror("fprintf");
+        perror("Error al escribir en el archivo");
         return -1;
     }
 
-    fclose(fd);
+    if (fclose(fd) == EOF)
+    {
+        perror("Error al cerrar el archivo");
+        return -1;
+    }
 
     return 0;
 }
@@ -251,15 +265,23 @@ int set_value(int clave, char valor1[256], int valor2, double valor3)
 // ------------------------------------------------------------------------------------------------------------------
 struct respuesta get_value(int clave)
 {
-    char *archivo = buscar_clave(clave);
     struct respuesta get;
+    char *archivo = buscar_clave(clave);
     if (archivo != NULL) // Copiar los valores asociados a la clave
     {
         // Si ha encontrado el archivo,lo abre y va copiando los valores en las variables
         char *archivo_copia = (char *)malloc(strlen(archivo) + 1);
         strcpy(archivo_copia, archivo);
         FILE *archivoabrir = fopen(archivo_copia, "r");
-        fscanf(archivoabrir,"%d,%[^,],%d,%lf", &clave, get.valor1, &get.valor2, &get.valor3);
+        if (archivoabrir == NULL)
+        {
+            perror("fopen");
+            get.respuesta = -1;
+            free(archivo_copia);
+            free(archivo);
+            return get;
+        }
+        fscanf(archivoabrir, "%d,%[^,],%d,%lf", &clave, get.valor1, &get.valor2, &get.valor3);
         free(archivo_copia);
         get.respuesta = 0;
     }
@@ -279,14 +301,14 @@ int modify_value(int clave, char valor1[256], int valor2, double valor3)
     char *path = buscar_clave(clave);
     if (path == NULL) // Hay que comprobar que la tupla en la que se modifican valores exista, si no existe, error
     {
-        perror("buscar_clave");
+        fprintf(stderr, "No se encontró la clave %d\n", clave);
         return -1;
     }
 
     char *path_copia = strdup(path);
     if (path_copia == NULL)
     {
-        perror("strdup");
+        fprintf(stderr, "Error al duplicar la ruta del archivo\n");
         return -1;
     }
 
@@ -295,19 +317,19 @@ int modify_value(int clave, char valor1[256], int valor2, double valor3)
 
     if (strlen(valor1) > 255) // Cadena de tamaño máximo: 256 incluyendo '\0'
     {
-        fprintf(stderr, "Valor de cadena de caracteres mayor al permitido");
+        fprintf(stderr, "Valor de cadena de caracteres mayor al permitido\n");
         free(path_copia);
         return -1;
     }
-    strcpy(tupla.valor1, valor1); // Set de valor1
-    tupla.valor2 = valor2;        // Set de valor2
+    strcpy(tupla.valor1, valor1);
+    tupla.valor2 = valor2;
     tupla.valor3 = valor3;
 
-    // Sobreescribe la informacion
+    // Sobreescribe la información
     FILE *archivo = fopen(path_copia, "r+"); // Abre el archivo de nuevo en modo escritura
     if (archivo == NULL)
     {
-        perror("No se pudo abrir el archivo\n");
+        fprintf(stderr, "No se pudo abrir el archivo %s\n", path_copia);
         free(path_copia);
         return -1;
     }
@@ -317,7 +339,7 @@ int modify_value(int clave, char valor1[256], int valor2, double valor3)
     int result = fprintf(archivo, "%d,%s,%d,%f\n", tupla.clave, tupla.valor1, tupla.valor2, tupla.valor3);
     if (result < 0)
     {
-        perror("fprintf");
+        fprintf(stderr, "Error al escribir en el archivo %s\n", path_copia);
         free(path_copia);
         fclose(archivo);
         return -1;
@@ -325,7 +347,6 @@ int modify_value(int clave, char valor1[256], int valor2, double valor3)
 
     free(path_copia);
     fclose(archivo);
-
     return 0;
 }
 
@@ -365,14 +386,18 @@ int copy_key(int clave, int clave2)
         // Si no existe, se crea con la clave nueva un nuevo documento con la clave2 y la info del 1
         if (set_value(clave2, v1, v2, v3) == -1)
         {
-            perror("Error al tomar valores de clave");
+            perror("Error al insertar valores de clave");
             return -1;
         }
     }
     else
     {
         // Si existe, eliminar el contenido de dentro de clave2 y añadimos los contenidos de clave
-        modify_value(clave2, v1, v2, v3);
+        if (modify_value(clave2, v1, v2, v3) == -1)
+        {
+            perror("Error al modificar valores de clave");
+            return -1;
+        }
     }
     return 0;
 }
@@ -380,7 +405,6 @@ int copy_key(int clave, int clave2)
 struct respuesta tratar_peticion(char mensaje[1024])
 {
     struct peticion pet = char_to_peticion(mensaje);
-    printf("Hola\n");
     struct respuesta r;
     switch (pet.op)
     {
