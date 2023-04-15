@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
     // PRUEBA 1:INIT -------------------------------------------------------------------------------
     if (init() != 0)
     { // Maneja cualquier error que se produzca al inicializar el cliente
-        perror("Error en init\n");
+        printf("Error en init\n");
         return -1;
     }
 
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     printf("Set\n");
     if (set_value(clave, valor1, valor2, valor3) != 0)
     { // Maneja cualquier error que se produzca al configurar el cliente
-        perror("Error en set\n");
+        printf("Error en set\n");
         return -1;
     }
     // PRUEBA 3:GET_VALUE (EXISTE EL VALOR) --------------------------------------------------------------------------
