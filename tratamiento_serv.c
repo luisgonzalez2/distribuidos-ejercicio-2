@@ -341,7 +341,7 @@ int modify_value(int clave, char valor1[256], int valor2, double valor3)
 
     // Mover el puntero al inicio del archivo
     fseek(archivo, 0, SEEK_SET);
-    int result = fprintf(archivo, "%d,%s,%d,%f\n", tupla.clave, tupla.valor1, tupla.valor2, tupla.valor3);
+    int result = fprintf(archivo, "%d,%s,%d,%lf\n", tupla.clave, tupla.valor1, tupla.valor2, tupla.valor3);
     if (result < 0)
     {
         fprintf(stderr, "Error al escribir en el archivo %s\n", path_copia);

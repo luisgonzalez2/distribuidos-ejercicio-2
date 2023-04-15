@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     printf("Valor2:%d\n", valor2g);
     printf("Valor3:%lf\n", valor3g);
 
-    // PRUEBA 4:EXIST(NO EXISTE EL VALOR) ------------------------------------------------------------------------------
+    // PRUEBA 7:EXIST(NO EXISTE EL VALOR) ------------------------------------------------------------------------------
     printf("Exist\n");
     int respuesta = exist(clave);
     if (respuesta < 0)
