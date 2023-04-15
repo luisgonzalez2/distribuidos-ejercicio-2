@@ -90,7 +90,15 @@ int main(void)
 
 	// Puerto variable de entorno
 	int port_tuplas;
-	port_tuplas = atoi(getenv("PORT_TUPLAS"));
+	if (getenv("PORT_TUPLAS") == NULL)
+	{
+		printf("Variable VAR1 no definida\n");
+		return 0;
+	}
+	else
+	{
+		port_tuplas = atoi(getenv("PORT_TUPLAS"));
+	}
 	server_addr.sin_port = htons(port_tuplas);
 
 	err = bind(sd, (const struct sockaddr *)&server_addr, sizeof(server_addr));

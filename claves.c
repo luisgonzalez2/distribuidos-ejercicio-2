@@ -30,8 +30,28 @@ struct respuesta mandar_servidor(struct peticion pet)
 	}
 
 	// 2. Abrir socket del servidor
-	char *ip_tuplas = getenv("IP_TUPLAS");
-	int port_tuplas = atoi(getenv("PORT_TUPLAS"));
+	char *ip_tuplas=NULL;
+	if (getenv("IP_TUPLAS") == NULL)
+	{
+		printf("Variable VAR1 no definida\n");
+		res.respuesta=-1;
+		return res;
+	}
+	else
+	{
+		ip_tuplas = getenv("IP_TUPLAS");
+	}
+	int port_tuplas;
+	if (getenv("PORT_TUPLAS") == NULL)
+	{
+		printf("Variable VAR1 no definida\n");
+		res.respuesta=-1;
+		return res;
+	}
+	else
+	{
+		port_tuplas = atoi(getenv("PORT_TUPLAS"));
+	}
 	bzero((char *)&server_addr, sizeof(server_addr));
 	hp = gethostbyname(ip_tuplas);
 	if (hp == NULL)
