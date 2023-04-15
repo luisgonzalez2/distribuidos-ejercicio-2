@@ -208,6 +208,11 @@ int init()
 // ------------------------------------------------------------------------------------------------------------------
 int set_value(int clave, char valor1[256], int valor2, double valor3)
 {
+    if(buscar_clave(clave)!=NULL)
+    { //Si la clave existia previamente,manda error
+        printf("La clave existía previamente\n");
+        return -1;
+    }
     DIR *dir = opendir("data");
     if (dir == NULL)
     {
