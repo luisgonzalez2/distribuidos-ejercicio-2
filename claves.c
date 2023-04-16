@@ -30,11 +30,11 @@ struct respuesta mandar_servidor(struct peticion pet)
 	}
 
 	// 2. Abrir socket del servidor
-	char *ip_tuplas=NULL;
+	char *ip_tuplas = NULL;
 	if (getenv("IP_TUPLAS") == NULL)
 	{
 		printf("Variable VAR1 no definida\n");
-		res.respuesta=-1;
+		res.respuesta = -1;
 		return res;
 	}
 	else
@@ -45,7 +45,7 @@ struct respuesta mandar_servidor(struct peticion pet)
 	if (getenv("PORT_TUPLAS") == NULL)
 	{
 		printf("Variable VAR1 no definida\n");
-		res.respuesta=-1;
+		res.respuesta = -1;
 		return res;
 	}
 	else
@@ -96,7 +96,7 @@ struct respuesta mandar_servidor(struct peticion pet)
 	{
 		perror("Error al recibir la respuesta\n");
 		close(sd);
-        free(mensaje);
+		free(mensaje);
 		res.respuesta = -1;
 		return res;
 	}

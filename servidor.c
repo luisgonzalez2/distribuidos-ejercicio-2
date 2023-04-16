@@ -13,7 +13,7 @@
 
 #define MAX_THREADS 10
 #define MAX_PETICIONES 256
-#define SERVIDOR "/SERVIDOR" // Pasar como var de entorno
+#define SERVIDOR "/SERVIDOR" // Pasar como variable de entorno
 
 pthread_mutex_t m_params;
 pthread_attr_t t_attr;
